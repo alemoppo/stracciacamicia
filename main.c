@@ -23,6 +23,12 @@ typedef struct
 
 }mazzo_t;
 
+typedef struct
+{
+    char attuale, successivo;
+
+}turno_t;
+
 void aggiungi_carta(mazzo_t *mazzo, carta_t *carta, char modo);
 void mixamazzi(mazzo_t *mazzo1, mazzo_t *mazzo2);
 int nuovo_mazzo(mazzo_t *mazzo);
@@ -32,6 +38,9 @@ void deallocamazzo(mazzo_t *mazzo);
 char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char giocatore_iniziale);
 carta_t *pesca(mazzo_t *mazzo);
 void mischiamazzo(mazzo_t *mazzo);
+void prossimo_turno(turno_t *turno);
+void _test(mazzo_t *mazzo1, mazzo_t *mazzo2, mazzo_t *tavola);
+char numero(char num_carta);
 
 int main()
 {
@@ -48,6 +57,23 @@ int main()
     return 0;
 }
 
+char numero(char num_carta)
+{
+    if(num_carta % 10 == 0)
+        return 10;
+    else return num_carta % 10;
+}
+
+void _test(mazzo_t *mazzo1, mazzo_t *mazzo2, mazzo_t *tavola)
+{
+    mostramazzo(*mazzo1);
+ /*   mostramazzo(*mazzo2);
+    while(mazzo1->prima != NULL)
+        aggiungi_carta(tavola, pesca(mazzo1), MODO_DOWN);
+    mostramazzo(*mazzo1);
+    mostramazzo(*tavola);*/
+}
+
 int nuovo_mazzo(mazzo_t *mazzo)
 {
     carta_t *nuova;
@@ -57,7 +83,7 @@ int nuovo_mazzo(mazzo_t *mazzo)
     {
         if((nuova = (carta_t*) malloc(sizeof(carta_t))))
         {
-            nuova->numero = i+1;
+            nuova->numero = i;
             if(!i)
             {
                 mazzo->prima = nuova;
@@ -99,7 +125,7 @@ void mischiamazzo(mazzo_t *mazzo)
 
     while(1)
     {
-        carte[(carta_corrente->numero)-1] = carta_corrente;
+        carte[(carta_corrente->numero)] = carta_corrente;
         if(carta_corrente->successiva != NULL)
             carta_corrente = carta_corrente->successiva;
         else break;
@@ -209,7 +235,7 @@ carta_t *pesca(mazzo_t *mazzo)
 
 void aggiungi_carta(mazzo_t *mazzo, carta_t *carta, char modo)
 {
-    if(modo == MODO_DOWN)
+    if(modo == MODO_UP)
     {
         if(mazzo->ultima == NULL)
         {
@@ -217,10 +243,13 @@ void aggiungi_carta(mazzo_t *mazzo, carta_t *carta, char modo)
             mazzo->prima = carta;
             carta->successiva = NULL;
         }
-        carta->successiva = mazzo->prima;
-        mazzo->prima = carta;
+        else
+        {
+            carta->successiva = mazzo->prima;
+            mazzo->prima = carta;
+        }
     }
-    else if(modo == MODO_UP)
+    else if(modo == MODO_DOWN)
     {
         if(mazzo->ultima == NULL)
         {
@@ -229,18 +258,37 @@ void aggiungi_carta(mazzo_t *mazzo, carta_t *carta, char modo)
         }
         else
             mazzo->ultima->successiva = carta;
+            mazzo->ultima = carta;
+            /*
+            mazzo->ultima->successiva = carta;
         carta->successiva = NULL;
+        */
     }
 }
 
 void mixamazzi(mazzo_t *mazzo1, mazzo_t *mazzo2)
 {
     mazzo1->ultima->successiva = mazzo2->prima;
+    mazzo1->ultima = mazzo2->ultima;
+}
+
+void prossimo_turno(turno_t *turno)
+{
+    char t;
+    t = turno->attuale;
+    turno->attuale = turno->successivo;
+    turno->successivo = t;
 }
 
 char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char giocatore_iniziale)
 {
     mazzo_t *temp;
+    char carte_debito[2] = {0,0};
+    turno_t turno;
+    int passi=0;
+
+    turno.attuale = 1;
+    turno.successivo = 2;
 
     tavola->prima = NULL;
     tavola->ultima = NULL;
@@ -252,12 +300,55 @@ char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char gioca
         mazzo2 = temp;
     }
 
-    mostramazzo(*mazzo1);
+    do
+    {
+        passi++;
+        /**/
+        if(turno.attuale == 1)
+        {
+            printf("gioca 1\n");
+            aggiungi_carta(tavola, pesca(mazzo1), MODO_DOWN);
+        }
+        else
+        {
+            printf("gioca 2\n");
+            aggiungi_carta(tavola, pesca(mazzo2), MODO_DOWN);
+        }
+        switch(numero(tavola->ultima->numero))
+        {
+            case 1:
+            case 2:
+            case 3:
+                carte_debito[turno.attuale] = 0;
+                carte_debito[turno.successivo] = numero(tavola->ultima->numero);
+                prossimo_turno(&turno);
+                break;
+            default:
 
-    aggiungi_carta(tavola, pesca(mazzo1), MODO_UP); 
-  
+                if(carte_debito[turno.attuale] > 0)
+                {
+                    carte_debito[turno.attuale]--;
+                    if(carte_debito[turno.attuale] == 0 && numero(tavola->ultima->numero%10) > 3)
+                    {
+                        if(turno.attuale == 1)
+                            mixamazzi(mazzo2, tavola);
+                        else mixamazzi(mazzo1, tavola);
+                        tavola->ultima = NULL;
+                        prossimo_turno(&turno);
+                    }
+                }
+                else prossimo_turno(&turno);
+                break;
+        }
 
-    mostramazzo(*mazzo1);
-    mostramazzo(*tavola);
+        mostramazzo(*mazzo1);
+        mostramazzo(*mazzo2);
+        mostramazzo(*tavola);
+        printf("\nProssima mano: \n");
+
+        /**/
+    } while((mazzo1->prima != NULL) && (mazzo2->prima != NULL));    //il gioco finisce quando non ci son più carte in tavola! (ovvero quando dopo una ripescata, il prossimo giocatore gioca la carta NULL
+printf("Match finito con %d mani", passi);
+
 	return 0;
 }
