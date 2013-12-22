@@ -38,23 +38,12 @@ int main()
     mazzo_t mazzo1, mazzo2, tavola, mazzo_intero;
 
     nuovo_mazzo(&mazzo_intero);
-//    mostramazzo(mazzo_intero);
     mischiamazzo(&mazzo_intero);
- //   mostramazzo(mazzo_intero);
-
     alzamazzo(&mazzo_intero, &mazzo1, &mazzo2, 20);
-
- //   mostramazzo(mazzo1);
-  //  mostramazzo(mazzo2);
-
-
     stracciacamicia(&mazzo1, &mazzo2, &tavola,  1);
 
-
-    deallocamazzo(&mazzo1);
-    deallocamazzo(&mazzo2);
-
-    //non è necessario deallorace mazzo_intero e tavola perché son le stesse carte!
+	//dealloco: non è necessario deallocare gli altri mazzi perché son le stesse carte!
+    deallocamazzo(&mazzo_intero);
 
     return 0;
 }
@@ -93,7 +82,9 @@ void mostramazzo(mazzo_t mazzo)
     while(corrente != NULL)
     {
         i++;
-        printf("%d, ", corrente->numero);
+        printf("%d", corrente->numero);
+        if(corrente->successiva != NULL)
+            printf(", ");
         corrente = corrente->successiva;
     }
     printf("\n\n----------\n\n");
@@ -177,6 +168,10 @@ int RandomIntInRange(int low, int high)
 
 carta_t *pesca(mazzo_t *mazzo)
 {
+	carta_t *pescata = mazzo->prima;
+	mazzo->prima = mazzo->prima->successiva;
+
+/*
     char i;
     carta_t *attuale;
     carta_t *pescata;
@@ -193,6 +188,7 @@ carta_t *pesca(mazzo_t *mazzo)
             if(successiva->successiva == NULL)
                 attuale->successiva = NULL;
         }
+		*/
 
         /*
         if(attuale->successiva != NULL)
@@ -203,9 +199,9 @@ carta_t *pesca(mazzo_t *mazzo)
         if(attuale->successiva == NULL)
             attuale = NULL;
         else attuale = attuale->successiva;
-        */
+        *
     } while(attuale->successiva != NULL);
-
+	*/
     pescata->successiva = NULL;
 
     return pescata;
@@ -258,13 +254,10 @@ char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char gioca
 
     mostramazzo(*mazzo1);
 
-    pesca(mazzo1);
-
-   // aggiungi_carta(tavola, pesca(mazzo1), MODO_UP); //pesca non elimina la carta!
-  //  aggiungi_carta(tavola, pesca(mazzo1), MODO_UP); //pesca non elimina la carta! e aggiungi() non aggiunge ma sostituisce
+    aggiungi_carta(tavola, pesca(mazzo1), MODO_UP); 
+  
 
     mostramazzo(*mazzo1);
     mostramazzo(*tavola);
+	return 0;
 }
-
-
