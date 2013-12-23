@@ -24,6 +24,9 @@
 #define MAZZO_NUM_CARTE_ERRATO  1<<2
 #define MAZZO_OK                1<<3
 #define MAZZO_CARTE_DOPPIE      1<<4
+#define MAZZO_CARTA_ERRATA      1<<5
+
+/* */
 
 /*parametri programma*/
 #define NUMERO_MISCHIAMENTI 120
@@ -34,6 +37,7 @@ typedef struct
 {
     struct carta_t *successiva;
     char numero;
+
 } carta_t;
 
 typedef struct
@@ -95,28 +99,28 @@ int main()
             verifica_mazzo(mazzo_intero, MAZZO_STRACCIACAMICIA, "Mazzo generato non valido!");
             mischiamazzo(&mazzo_intero);
             verifica_mazzo(mazzo_intero, MAZZO_STRACCIACAMICIA, "Mazzo mischiato non valido!");
-            copia_mazzo(mazzo_intero, &mazzo_temp);
-            verifica_mazzo(mazzo_temp, MAZZO_STRACCIACAMICIA, "Mazzo copiato non valido!");
+//            copia_mazzo(mazzo_intero, &mazzo_temp);
+//            verifica_mazzo(mazzo_temp, MAZZO_STRACCIACAMICIA, "Mazzo copiato non valido!");
         }
-        mostramazzo(mazzo_intero);
         alzamazzo(&mazzo_intero, &mazzo1, &mazzo2, 20);
         ritorno = stracciacamicia(&mazzo1, &mazzo2, &tavola,  1);
-        printf("giocate: %d\n-------------", ritorno);
+        printf("giocate: %d\n", ritorno);
         if(ritorno > max_lunghezza)
         {
             max_lunghezza = ritorno;
-            mazzo_max = mazzo_temp;
+ //           mazzo_max = mazzo_temp;
         }
     }
     printf("\nmassimo: %d\n", max_lunghezza);
-    verifica_mazzo(mazzo_temp, MAZZO_STRACCIACAMICIA, "Mazzo max non valido!");
-    mostramazzo(mazzo_max);
-    salvamazzo(mazzo_max);
+ //   verifica_mazzo(mazzo_temp, MAZZO_STRACCIACAMICIA, "Mazzo max non valido!");
+//    mostramazzo(mazzo_max);
+//    salvamazzo(mazzo_max);
     deallocamazzo(&mazzo1);
     deallocamazzo(&mazzo2);
     deallocamazzo(&tavola);
-    deallocamazzo(&mazzo_intero);
-    deallocamazzo(&mazzo_max);
+    //deallocamazzo(&mazzo_intero); //inutile: le carte son le stesse!
+//    deallocamazzo(&mazzo_temp);
+//    deallocamazzo(&mazzo_max);
 
 
     return 0;
@@ -143,6 +147,13 @@ char controlla_mazzo(mazzo_t mazzo,char tipo_mazzo)
             if(corrente == NULL)
                 corrente = mazzo.prima;
 
+            if(corrente->numero < 0 || corrente->numero > 39)
+            {
+                printf("Carta non conosciuta: %d", corrente->numero);
+                return MAZZO_CARTA_ERRATA;
+            }
+
+
             if(carte[corrente->numero] == 0)
             {
                 carte[corrente->numero] = 1;
@@ -152,6 +163,7 @@ char controlla_mazzo(mazzo_t mazzo,char tipo_mazzo)
                 printf("Carta doppia: %d", corrente->numero);
                 return MAZZO_CARTE_DOPPIE;
             }
+
             if(corrente->successiva == NULL)
                 if(mazzo.ultima != corrente)
                     return MAZZO_ULTIMA_ERRATA;
@@ -275,6 +287,7 @@ void mostramazzo(mazzo_t mazzo)
 }
 void mischiamazzo(mazzo_t *mazzo)
 {
+    static char randomincrementale=0;
     carta_t *carte[40], *carta_corrente;
     char i=0, temp, a, b;
 
@@ -288,7 +301,13 @@ void mischiamazzo(mazzo_t *mazzo)
             carta_corrente = carta_corrente->successiva;
         else break;
     }
-    srand(time(NULL)*clock());        //rifare meglio il generatore random!
+
+    /* */
+    srand(time(NULL)*clock()+randomincrementale);        //rifare meglio il generatore random!
+    if(randomincrementale++ > 100)
+        randomincrementale = 0;
+    /* */
+
     for(i=0; i<NUMERO_MISCHIAMENTI; i++) //numero mischiamenti
     {
         a = RandomIntInRange(0,40);
