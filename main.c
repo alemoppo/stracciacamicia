@@ -66,7 +66,7 @@ int main()
         nuovo_mazzo(&mazzo_intero);
         mischiamazzo(&mazzo_intero);
     }
-    mostramazzo(mazzo_intero);
+
         if(scelta != '1')
             salvamazzo(mazzo_intero);
 
