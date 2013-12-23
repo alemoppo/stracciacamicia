@@ -62,9 +62,11 @@ int main()
     if(scelta == '1')
         carica_mazzo(&mazzo_intero);
     else
+    {
         nuovo_mazzo(&mazzo_intero);
-
         mischiamazzo(&mazzo_intero);
+    }
+    mostramazzo(mazzo_intero);
         if(scelta != '1')
             salvamazzo(mazzo_intero);
 
@@ -100,9 +102,12 @@ int nuovo_mazzo(mazzo_t *mazzo)
                 mazzo->prima = nuova;
                 mazzo->ultima = nuova;
             }
-            mazzo->ultima->successiva = nuova;
-            mazzo->ultima = nuova;
-            mazzo->ultima->successiva = NULL;
+            else
+            {
+                mazzo->ultima->successiva = nuova;
+                mazzo->ultima = nuova;
+                mazzo->ultima->successiva = NULL;
+            }
         }
         else EXIT_FAILURE;
     }
@@ -337,8 +342,9 @@ void salvamazzo(mazzo_t mazzo)
     carta_t *carta;
     char nomefile[40];
 
-    printf("Nome file da salvare: ");
-    scanf("%s", nomefile);
+        printf("Nome file da salvare: ");
+        scanf("%s", nomefile);
+
     fpout = fopen(nomefile, "w");
     if(!fpout)
         printf("impossibile accedere al file");
@@ -350,6 +356,7 @@ void salvamazzo(mazzo_t mazzo)
         fprintf(fpout, "%d ", carta->numero);
         carta = carta->successiva;
     }
+    fprintf(fpout, "%d ", carta->numero);   //nel while controlla la successiva, ma questa attuale devo salvarla :v
     fclose(fpout);
 }
 
@@ -379,34 +386,14 @@ void carica_mazzo(mazzo_t *mazzo)
                 mazzo->prima = nuova;
                 mazzo->ultima = nuova;
             }
-            mazzo->ultima->successiva = nuova;
-            mazzo->ultima = nuova;
-            mazzo->ultima->successiva = NULL;
+            else
+            {
+                mazzo->ultima->successiva = nuova;
+                mazzo->ultima = nuova;
+                mazzo->ultima->successiva = NULL;
+            }
         }
         else EXIT_FAILURE;
     }
 }
- /*
- int nuovo_mazzo(mazzo_t *mazzo)
-{
-    carta_t *nuova;
-    char i;
 
-    for(i=0;i<40;i++)
-    {
-        if((nuova = (carta_t*) malloc(sizeof(carta_t))))
-        {
-            nuova->numero = i;
-            if(!i)
-            {
-                mazzo->prima = nuova;
-                mazzo->ultima = nuova;
-            }
-            mazzo->ultima->successiva = nuova;
-            mazzo->ultima = nuova;
-            mazzo->ultima->successiva = NULL;
-        }
-        else EXIT_FAILURE;
-    }
-    return 0;
-} */
