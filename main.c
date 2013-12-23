@@ -35,24 +35,46 @@ int nuovo_mazzo(mazzo_t *mazzo);
 void mostramazzo(mazzo_t mazzo);
 void alzamazzo(mazzo_t *mazzo_intero,mazzo_t *mazzo1,mazzo_t *mazzo2, int cartealzate);
 void deallocamazzo(mazzo_t *mazzo);
-char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char giocatore_iniziale);
+int stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char giocatore_iniziale);
 carta_t *pesca(mazzo_t *mazzo);
 void mischiamazzo(mazzo_t *mazzo);
 void prossimo_turno(turno_t *turno);
-void _test(mazzo_t *mazzo1, mazzo_t *mazzo2, mazzo_t *tavola);
 char numero(char num_carta);
+void salvamazzo(mazzo_t mazzo);
+void carica_mazzo(mazzo_t *mazzo);
+
+/*
+
+fare i controlli nelle varie funzioni se il mazzo non ha 40 carte!
+
+*/
+
 
 int main()
 {
     mazzo_t mazzo1, mazzo2, tavola, mazzo_intero;
 
-    nuovo_mazzo(&mazzo_intero);
-    mischiamazzo(&mazzo_intero);
-    alzamazzo(&mazzo_intero, &mazzo1, &mazzo2, 20);
-    stracciacamicia(&mazzo1, &mazzo2, &tavola,  1);
+    char scelta;
+    int massimo = 0, i, ritorno;
 
-	//dealloco: non è necessario deallocare gli altri mazzi perché son le stesse carte!
+    printf("1: carica mazzo\n2: genera mazzo\n\n scelta: ");
+    scanf("%c", &scelta);
+    if(scelta == '1')
+        carica_mazzo(&mazzo_intero);
+    else
+        nuovo_mazzo(&mazzo_intero);
+
+        mischiamazzo(&mazzo_intero);
+        if(scelta != '1')
+            salvamazzo(mazzo_intero);
+
+        alzamazzo(&mazzo_intero, &mazzo1, &mazzo2, 20);
+        ritorno = stracciacamicia(&mazzo1, &mazzo2, &tavola,  1);
+        if(ritorno > massimo)
+            massimo = ritorno;
+
     deallocamazzo(&mazzo_intero);
+    printf("massimo: %d", massimo);
 
     return 0;
 }
@@ -63,17 +85,6 @@ char numero(char num_carta)
         return 10;
     else return num_carta % 10;
 }
-
-void _test(mazzo_t *mazzo1, mazzo_t *mazzo2, mazzo_t *tavola)
-{
-    mostramazzo(*mazzo1);
- /*   mostramazzo(*mazzo2);
-    while(mazzo1->prima != NULL)
-        aggiungi_carta(tavola, pesca(mazzo1), MODO_DOWN);
-    mostramazzo(*mazzo1);
-    mostramazzo(*tavola);*/
-}
-
 int nuovo_mazzo(mazzo_t *mazzo)
 {
     carta_t *nuova;
@@ -197,37 +208,6 @@ carta_t *pesca(mazzo_t *mazzo)
 	carta_t *pescata = mazzo->prima;
 	mazzo->prima = mazzo->prima->successiva;
 
-/*
-    char i;
-    carta_t *attuale;
-    carta_t *pescata;
-    carta_t *successiva;
-
-    pescata = mazzo->ultima;
-    attuale = mazzo->prima;
-
-    do
-    {
-        if(attuale->successiva != NULL)
-        {
-            successiva = attuale->successiva;
-            if(successiva->successiva == NULL)
-                attuale->successiva = NULL;
-        }
-		*/
-
-        /*
-        if(attuale->successiva != NULL)
-            if(attuale->successiva->successiva == NULL)
-                attuale->successiva = NULL;
-        */
-        /*
-        if(attuale->successiva == NULL)
-            attuale = NULL;
-        else attuale = attuale->successiva;
-        *
-    } while(attuale->successiva != NULL);
-	*/
     pescata->successiva = NULL;
 
     return pescata;
@@ -280,7 +260,7 @@ void prossimo_turno(turno_t *turno)
     turno->successivo = t;
 }
 
-char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char giocatore_iniziale)
+int stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char giocatore_iniziale)
 {
     mazzo_t *temp;
     char carte_debito[2] = {0,0};
@@ -306,12 +286,10 @@ char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char gioca
         /**/
         if(turno.attuale == 1)
         {
-            printf("gioca 1\n");
             aggiungi_carta(tavola, pesca(mazzo1), MODO_DOWN);
         }
         else
         {
-            printf("gioca 2\n");
             aggiungi_carta(tavola, pesca(mazzo2), MODO_DOWN);
         }
         switch(numero(tavola->ultima->numero))
@@ -341,14 +319,94 @@ char stracciacamicia(mazzo_t *mazzo1,mazzo_t *mazzo2,mazzo_t *tavola, char gioca
                 break;
         }
 
-        mostramazzo(*mazzo1);
+      /*  mostramazzo(*mazzo1);
         mostramazzo(*mazzo2);
         mostramazzo(*tavola);
         printf("\nProssima mano: \n");
-
+*/
         /**/
     } while((mazzo1->prima != NULL) && (mazzo2->prima != NULL));    //il gioco finisce quando non ci son più carte in tavola! (ovvero quando dopo una ripescata, il prossimo giocatore gioca la carta NULL
-printf("Match finito con %d mani", passi);
 
-	return 0;
+
+	return passi;
 }
+
+void salvamazzo(mazzo_t mazzo)
+{
+    FILE *fpout;
+    carta_t *carta;
+    char nomefile[40];
+
+    printf("Nome file da salvare: ");
+    scanf("%s", nomefile);
+    fpout = fopen(nomefile, "w");
+    if(!fpout)
+        printf("impossibile accedere al file");
+
+    carta = mazzo.prima;
+
+    while(carta->successiva != NULL)
+    {
+        fprintf(fpout, "%d ", carta->numero);
+        carta = carta->successiva;
+    }
+    fclose(fpout);
+}
+
+void carica_mazzo(mazzo_t *mazzo)
+{
+    FILE *fpin;
+    carta_t *nuova;
+    char i, nomefile[40];
+
+    printf("Nome file da caricare: ");
+    scanf("%s", nomefile);
+
+    fpin = fopen(nomefile, "r");
+    if(!fpin)
+    {
+        printf("impossibile accedere al file");
+        EXIT_FAILURE;
+    }
+    for(i=0;i<40 && !feof(fpin);i++)
+    {
+        if((nuova = (carta_t*) malloc(sizeof(carta_t))))
+        {
+            fscanf(fpin,"%d ", &(nuova->numero));
+
+            if(!i)
+            {
+                mazzo->prima = nuova;
+                mazzo->ultima = nuova;
+            }
+            mazzo->ultima->successiva = nuova;
+            mazzo->ultima = nuova;
+            mazzo->ultima->successiva = NULL;
+        }
+        else EXIT_FAILURE;
+    }
+}
+ /*
+ int nuovo_mazzo(mazzo_t *mazzo)
+{
+    carta_t *nuova;
+    char i;
+
+    for(i=0;i<40;i++)
+    {
+        if((nuova = (carta_t*) malloc(sizeof(carta_t))))
+        {
+            nuova->numero = i;
+            if(!i)
+            {
+                mazzo->prima = nuova;
+                mazzo->ultima = nuova;
+            }
+            mazzo->ultima->successiva = nuova;
+            mazzo->ultima = nuova;
+            mazzo->ultima->successiva = NULL;
+        }
+        else EXIT_FAILURE;
+    }
+    return 0;
+} */
